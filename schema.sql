@@ -1,0 +1,23 @@
+CREATE SCHEMA IF NOT EXISTS aws_service;
+
+CREATE TYPE aws_service.account_joined_method AS ENUM (
+    'INVITED',
+    'CREATED'
+);
+
+CREATE TYPE aws_service.account_state AS ENUM (
+    'PENDING_ACTIVATION',
+    'ACTIVE',
+    'SUSPENDED',
+    'PENDING_CLOSURE',
+    'CLOSED'
+);
+
+CREATE TABLE IF NOT EXISTS aws_service.account(
+    id char(12) PRIMARY KEY,
+    name varchar(50) NOT NULL,
+    email citext UNIQUE NOT NULL,
+    joined_method aws_service.account_joined_method NOT NULL,
+    joined_timestamp timestamptz NOT NULL,
+    state aws_service.account_state NOT NULL
+);
