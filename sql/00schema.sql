@@ -14,6 +14,7 @@ CREATE TYPE aws_service.account_state AS ENUM (
 );
 
 CREATE EXTENSION IF NOT EXISTS citext;
+
 CREATE TABLE IF NOT EXISTS aws_service.account(
     id char(12) PRIMARY KEY,
     name varchar(50) NOT NULL,
