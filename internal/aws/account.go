@@ -5,7 +5,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/organizations"
-	"github.com/curtrube/aws-account-service/internal/model"
+	"github.com/curtrube/aws-account-service/internal/account"
 )
 
 type ListAccountsAPIClient interface {
@@ -17,7 +17,7 @@ type ListAccountsAPIClient interface {
 }
 
 // ListAccounts returns a list of accounts from the AWS organization.
-func ListAccounts(ctx context.Context, client ListAccountsAPIClient) ([]model.Account, error) {
+func ListAccounts(ctx context.Context, client ListAccountsAPIClient) ([]account.Account, error) {
 	out, err := client.ListAccounts(
 		ctx,
 		&organizations.ListAccountsInput{},
@@ -26,10 +26,10 @@ func ListAccounts(ctx context.Context, client ListAccountsAPIClient) ([]model.Ac
 		return nil, err
 	}
 
-	accounts := make([]model.Account, 0, len(out.Accounts))
+	accounts := make([]account.Account, 0, len(out.Accounts))
 
 	for _, a := range out.Accounts {
-		accounts = append(accounts, model.Account{
+		accounts = append(accounts, account.Account{
 			ID:              aws.ToString(a.Id),
 			Name:            aws.ToString(a.Name),
 			Email:           aws.ToString(a.Email),

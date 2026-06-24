@@ -1,42 +1,24 @@
 package account
 
 import (
-	"aws-account-service/internal/model"
 	"context"
-
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/organizations"
+	"time"
 )
 
-type ListAccountsAPIClient interface {
-	ListAccounts(
-		context.Context,
-		*organizations.ListAccountsInput,
-		...func(*organizations.Options),
-	) (*organizations.ListAccountsOutput, error)
+type Account struct {
+	ID              string    `db:"id"`
+	Name            string    `db:"name"`
+	Email           string    `db:"email"`
+	JoinedMethod    string    `db:"joined_method"`
+	JoinedTimestamp time.Time `db:"joined_timestamp"`
+	State           string    `db:"state"`
 }
 
-func ListAccounts(ctx context.Context, client ListAccountsAPIClient) ([]model.Account, error) {
-	out, err := client.ListAccounts(
-		ctx,
-		&organizations.ListAccountsInput{},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	accounts := make([]model.Account, 0, len(out.Accounts))
-
-	for _, a := range out.Accounts {
-		accounts = append(accounts, model.Account{
-			ID:              aws.ToString(a.Id),
-			Name:            aws.ToString(a.Name),
-			Email:           aws.ToString(a.Email),
-			JoinedMethod:    string(a.JoinedMethod),
-			JoinedTimestamp: *a.JoinedTimestamp,
-			State:           string(a.State),
-		})
-	}
-
-	return accounts, nil
+type AccountService interface {
+	Create(ctx context.Context) (Account, error)
+	GetByID(ctx context.Context, id string) (Account, error)
+	GetByName(ctx context.Context, name string) (Account, error)
+	Update(ctx context.Context) error
+	List(ctx context.Context) ([]Account, error)
+	Delete(ctx context.Context) error
 }
