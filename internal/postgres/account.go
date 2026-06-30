@@ -18,11 +18,11 @@ import (
 
 // AccountRepository persists and retrieves account data from PostgreSQL.
 type AccountStore struct {
-	db *pgxpool.Pool
+	db *pgxpool.Conn
 }
 
 // NewAccountRepository creates a new account repository.
-func NewAccountStore(db *pgxpool.Pool) *AccountStore {
+func NewAccountStore(db *pgxpool.Conn) *AccountStore {
 	return &AccountStore{db: db}
 }
 

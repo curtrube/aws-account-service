@@ -80,7 +80,11 @@ func TestMain(m *testing.M) {
 func TestAccountStore_Create(t *testing.T) {
 	require.NotNil(t, testPool)
 
-	store := postgres.NewAccountStore(testPool)
+	conn, err := testPool.Acquire(ctx)
+	defer conn.Release()
+	require.NoError(t, err)
+
+	store := postgres.NewAccountStore(conn)
 	require.NotNil(t, store)
 
 	in := account.Account{
@@ -103,7 +107,11 @@ func TestAccountStore_Create(t *testing.T) {
 func TestAccountStore_GetByName(t *testing.T) {
 	require.NotNil(t, testPool)
 
-	store := postgres.NewAccountStore(testPool)
+	conn, err := testPool.Acquire(ctx)
+	defer conn.Release()
+	require.NoError(t, err)
+
+	store := postgres.NewAccountStore(conn)
 	require.NotNil(t, store)
 
 	name := "test-account-1"
@@ -116,7 +124,11 @@ func TestAccountStore_GetByName(t *testing.T) {
 func TestAccountStore_List(t *testing.T) {
 	require.NotNil(t, testPool)
 
-	store := postgres.NewAccountStore(testPool)
+	conn, err := testPool.Acquire(ctx)
+	defer conn.Release()
+	require.NoError(t, err)
+
+	store := postgres.NewAccountStore(conn)
 	require.NotNil(t, store)
 
 	accounts, err := store.List(context.Background())
