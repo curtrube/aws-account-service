@@ -52,7 +52,7 @@ RETURNING
 	state
 `
 
-// Create inserts a new account and returns the created account.
+// Create inserts and returns the created account.
 func (s *AccountStore) Create(ctx context.Context, acct account.Account) (*account.Account, error) {
 	rows, err := s.db.Query(ctx, createAccountSQL, pgx.NamedArgs{
 		"id":               acct.ID,
