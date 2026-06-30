@@ -43,6 +43,13 @@ VALUES (
 	@joined_timestamp,
 	@state
 )
+ON CONFLICT(id)
+DO UPDATE SET
+	name = EXCLUDED.name,
+	email = EXCLUDED.email,
+	joined_method = EXCLUDED.joined_method,
+	joined_timestamp = EXCLUDED.joined_timestamp,
+	state = EXCLUDED.state
 RETURNING 
 	id,
 	name,
@@ -53,6 +60,7 @@ RETURNING
 `
 
 // Create inserts and returns the created account.
+// If conflict on (id) will perform an upsert on the row.
 func (s *AccountStore) Create(ctx context.Context, acct account.Account) (*account.Account, error) {
 	rows, err := s.db.Query(ctx, createAccountSQL, pgx.NamedArgs{
 		"id":               acct.ID,
