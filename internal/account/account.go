@@ -14,7 +14,7 @@ type Account struct {
 	State           string    `db:"state"`
 }
 
-type AccountService interface {
+type Service interface {
 	Create(ctx context.Context) (Account, error)
 	GetByID(ctx context.Context, id string) (Account, error)
 	GetByName(ctx context.Context, name string) (Account, error)
