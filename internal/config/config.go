@@ -17,7 +17,7 @@ func ParseFlags(args []string) (*Config, error) {
 	cfg := &Config{}
 
 	var level string
-	fs.StringVar(&level, "log-level", "info", "Log level (TRACE, DEBUG, INFO, WARN, ERROR)")
+	fs.StringVar(&level, "log-level", "INFO", "Log level (TRACE, DEBUG, INFO, WARN, ERROR)")
 
 	if err := fs.Parse(args); err != nil {
 		return nil, err

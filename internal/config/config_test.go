@@ -16,7 +16,7 @@ func TestParseFlags_Defaults(t *testing.T) {
 
 func TestParseFlags_Overrides(t *testing.T) {
 	cfg, err := ParseFlags([]string{
-		"--log-level", "debug",
+		"-log-level", "debug",
 	})
 	require.NoError(t, err)
 	assert.Equal(t, slog.LevelDebug, cfg.LogLevel)
