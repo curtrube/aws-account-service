@@ -1,21 +1,15 @@
-package postgres_test
+package testutil
 
 import (
 	"context"
 	"fmt"
-	"log"
-	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/curtrube/aws-account-service/internal/postgres"
+	"github.com/curtrube/aws-account-service/internal/db"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/stretchr/testify/require"
 	pg "github.com/testcontainers/testcontainers-go/modules/postgres"
-)
-
-var (
-	ctx      = context.Background()
-	testPool *pgxpool.Pool
 )
 
 func setupPGTestContainer(ctx context.Context) (*pg.PostgresContainer, error) {
@@ -40,29 +34,54 @@ func setupPGTestContainer(ctx context.Context) (*pg.PostgresContainer, error) {
 	return ctr, nil
 }
 
-func TestMain(m *testing.M) {
+func New(ctx context.Context, t *testing.T) *pgxpool.Pool {
+	t.Helper()
+
+	ctr, err := setupPGTestContainer(ctx)
+	require.NoErrorf(t, err, "setup test container: %v", err)
+
+	t.Cleanup(func() {
+		ctr.Terminate(ctx)
+	})
+
+	connStr, err := ctr.ConnectionString(ctx)
+	require.NoErrorf(t, err, "get container connection string: %v", err)
+
+	testPool, err := db.New(ctx, connStr)
+	require.NoErrorf(t, err, "create new db pool: %v", err)
+
+	t.Cleanup(func() {
+		testPool.Close()
+	})
+
+	return testPool
+}
+
+// Start sets up a postgres test container. Returns a pgxPool, a cleanup func, and an error.
+func Start(ctx context.Context) (*pgxpool.Pool, func(), error) {
 	ctr, err := setupPGTestContainer(ctx)
 	if err != nil {
-		log.Fatalf("setup container: %v", err)
+		return nil, nil, err
 	}
-	defer ctr.Terminate(ctx)
 
 	connStr, err := ctr.ConnectionString(ctx)
 	if err != nil {
-		log.Fatalf("connection string: %v", err)
+		_ = ctr.Terminate(ctx)
+		return nil, nil, err
 	}
 
-	testPool, err = postgres.New(ctx, connStr)
+	pool, err := db.New(ctx, connStr)
 	if err != nil {
-		log.Fatalf("new db pool: %v", err)
+		_ = ctr.Terminate(ctx)
+		return nil, nil, err
 	}
-	defer testPool.Close()
 
-	code := m.Run()
-	testPool.Close()
-	_ = ctr.Terminate(ctx)
+	cleanup := func() {
+		pool.Close()
+		_ = ctr.Terminate(ctx)
+	}
 
-	os.Exit(code)
+	return pool, cleanup, nil
 }
 
 //func TestNew(t *testing.T) {

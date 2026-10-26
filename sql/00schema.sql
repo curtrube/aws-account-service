@@ -1,11 +1,11 @@
-CREATE SCHEMA IF NOT EXISTS aws;
+CREATE SCHEMA IF NOT EXISTS aws_cloud;
 
-CREATE TYPE aws.account_joined_method AS ENUM (
+CREATE TYPE aws_cloud.account_joined_method AS ENUM (
     'INVITED',
     'CREATED'
 );
 
-CREATE TYPE aws.account_state AS ENUM (
+CREATE TYPE aws_cloud.account_state AS ENUM (
     'PENDING_ACTIVATION',
     'ACTIVE',
     'SUSPENDED',
@@ -15,11 +15,13 @@ CREATE TYPE aws.account_state AS ENUM (
 
 CREATE EXTENSION IF NOT EXISTS citext;
 
-CREATE TABLE IF NOT EXISTS aws.account(
-    id               char(12) PRIMARY KEY,
-    name             varchar(50) NOT NULL,
+CREATE TABLE IF NOT EXISTS aws_cloud.account(
+    id               BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    account_id       CHAR(12) NOT NULL UNIQUE,
+    account_name     VARCHAR(50) NOT NULL,
+    account_arn      TEXT,
     email            CITEXT UNIQUE NOT NULL,
-    joined_method    aws.account_joined_method NOT NULL,
-    joined_timestamp timestamptz NOT NULL,
-    state            aws.account_state NOT NULL
+    account_state    aws_cloud.account_state NOT NULL,
+    joined_method    aws_cloud.account_joined_method NOT NULL,
+    joined_at        TIMESTAMPTZ NOT NULL
 );
