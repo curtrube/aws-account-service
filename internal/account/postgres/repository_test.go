@@ -1,4 +1,4 @@
-package account
+package postgres
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/curtrube/aws-account-service/internal/account"
 	"github.com/curtrube/aws-account-service/internal/testutil"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/assert"
@@ -21,48 +22,43 @@ func TestMain(m *testing.M) {
 		fmt.Fprintf(os.Stderr, "start postgres test database: %v\n", err)
 		os.Exit(1)
 	}
-
 	testPool = pool
 	code := m.Run()
 	cleanup()
 	os.Exit(code)
 }
 
-func TestAccountRepository_Create(t *testing.T) {
+func TestRepository_Upsert(t *testing.T) {
 	ctx := context.Background()
 	require.NotNil(t, testPool)
 
-	conn, err := testPool.Acquire(ctx)
-	require.NoError(t, err)
-	defer conn.Release()
-
-	store := NewAccountRepository(conn)
-	require.NotNil(t, store)
+	repo := NewRepository(testPool)
+	require.NotNil(t, repo)
 
 	mgmtAccountID := "111111111111"
 	ouID := "o-abc123"
 	accountID := "333333333333"
 	accountArn := fmt.Sprintf("arn:aws:organizations::%s:account/%s/%s", mgmtAccountID, ouID, accountID)
 
-	in := Account{
+	in := account.Account{
 		AccountID:    accountID,
-		AccountName:  "test-account-3",
-		AccountArn:   accountArn,
+		Name:         "test-account-3",
+		Arn:          accountArn,
 		Email:        "foobar@baz.com",
-		AccountState: "ACTIVE",
+		State:        "ACTIVE",
 		JoinedMethod: "CREATED",
 		JoinedAt:     time.Now(),
 	}
 
-	out, err := store.Create(ctx, in)
+	out, err := repo.Upsert(ctx, in)
 	require.NoError(t, err)
 
 	assert.NotEmpty(t, out.ID)
 	assert.Equal(t, in.AccountID, out.AccountID)
-	assert.Equal(t, in.AccountName, out.AccountName)
-	assert.Equal(t, in.AccountArn, out.AccountArn)
+	assert.Equal(t, in.Name, out.Name)
+	assert.Equal(t, in.Arn, out.Arn)
 	assert.Equal(t, in.Email, out.Email)
-	assert.Equal(t, in.AccountState, out.AccountState)
+	assert.Equal(t, in.State, out.State)
 	assert.Equal(t, in.JoinedMethod, out.JoinedMethod)
 }
 

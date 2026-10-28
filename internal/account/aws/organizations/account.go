@@ -1,3 +1,5 @@
+// Package aws provides AWS SDK adapters,
+// fetches and maps accounts.
 package aws
 
 import (
@@ -37,10 +39,10 @@ func ListAccounts(ctx context.Context, client ListAccountsAPIClient) ([]account.
 	for _, a := range awsAccounts {
 		out = append(out, account.Account{
 			AccountID:    awssdk.ToString(a.Id),
-			AccountName:  awssdk.ToString(a.Name),
-			AccountArn:   awssdk.ToString(a.Arn),
+			Name:         awssdk.ToString(a.Name),
+			Arn:          awssdk.ToString(a.Arn),
 			Email:        awssdk.ToString(a.Email),
-			AccountState: string(a.State),
+			State:        string(a.State),
 			JoinedMethod: string(a.JoinedMethod),
 			JoinedAt:     awssdk.ToTime(a.JoinedTimestamp),
 		})

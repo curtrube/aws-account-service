@@ -79,17 +79,17 @@ func TestListAccounts(t *testing.T) {
 	require.Equal(t, []account.Account{
 		{
 			AccountID:    "123456789012",
-			AccountName:  "Prod",
-			AccountArn:   "arn:aws:organizations::123456789012:account/o-example/123456789012",
+			Name:         "Prod",
+			Arn:          "arn:aws:organizations::123456789012:account/o-example/123456789012",
 			Email:        "prod@example.com",
-			AccountState: "ACTIVE",
+			State:        "ACTIVE",
 			JoinedMethod: "CREATED",
 			JoinedAt:     joinedAt,
 		},
 		{
-			AccountID:    "210987654321",
-			AccountName:  "Dev",
-			AccountState: "SUSPENDED",
+			AccountID: "210987654321",
+			Name:      "Dev",
+			State:     "SUSPENDED",
 		},
 	}, got)
 
