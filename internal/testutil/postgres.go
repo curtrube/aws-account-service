@@ -21,8 +21,8 @@ func setupPGTestContainer(ctx context.Context) (*pg.PostgresContainer, error) {
 	ctr, err := pg.Run(
 		ctx,
 		img,
-		pg.WithInitScripts(filepath.Join("..", "..", "sql", "00schema.sql")),
-		pg.WithInitScripts(filepath.Join("..", "..", "testdata", "seed.sql")),
+		pg.WithInitScripts(filepath.Join("..", "..", "..", "sql", "00schema.sql")),
+		pg.WithInitScripts(filepath.Join("..", "..", "..", "testdata", "seed.sql")),
 		pg.WithUsername(dbUser),
 		pg.WithPassword(dbPassword),
 		pg.WithDatabase(dbName),

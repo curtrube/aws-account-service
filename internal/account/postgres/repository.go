@@ -10,17 +10,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// DB defines database operations required by the account store.
-//type DB interface {
-//	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
-//	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
-//	Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
-//}
-
 // Repository persists and retrieves account data from PostgreSQL.
 type Repository struct {
 	db *pgxpool.Pool
 }
+
+// compile time check that *Repository implements the account.Repository inteface.
+var _ account.Repository = (*Repository)(nil)
 
 // NewRepository creates a new account repository.
 func NewRepository(db *pgxpool.Pool) *Repository {

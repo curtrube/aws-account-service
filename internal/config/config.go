@@ -1,31 +1,51 @@
 package config
 
 import (
-	"flag"
-	"fmt"
-	"log/slog"
+	"errors"
+	"os"
 )
 
 // Config holds cli configuration for aws-account-service.
 type Config struct {
-	LogLevel slog.Level
+	AwsRegion   string
+	DatabaseURL string
+	Environment string
+	Port        string
 }
 
-// ParseFlags parses command-line arguments into a config.
-func ParseFlags(args []string) (*Config, error) {
-	fs := flag.NewFlagSet("aws-account-service", flag.ContinueOnError)
-	cfg := &Config{}
-
-	var level string
-	fs.StringVar(&level, "log-level", "INFO", "Log level (TRACE, DEBUG, INFO, WARN, ERROR)")
-
-	if err := fs.Parse(args); err != nil {
-		return nil, err
+// Load reads service configuration from environment varaibles and applies defaults.
+func Load() (*Config, error) {
+	awsRegion, ok := os.LookupEnv("AWS_REGION")
+	if !ok {
+		awsRegion = ""
 	}
 
-	if err := cfg.LogLevel.UnmarshalText([]byte(level)); err != nil {
-		return nil, fmt.Errorf("invalid log level %q: %w", level, err)
+	// If not databaseURL, then require PG_*
+	databaseURL, ok := os.LookupEnv("DATABASE_URL")
+	if !ok {
+		return nil, errors.New("m")
 	}
 
-	return cfg, nil
+	env, ok := os.LookupEnv("ENVIRONMENT")
+	if !ok {
+		return nil, errors.New("missing required env variable: ENVIRONMENT")
+	}
+
+	//logLevel, ok := os.LookupEnv("LOG_LEVEL")
+	//if !ok {
+	//	logLevel = slog.LevelInfo
+	//}
+
+	port, ok := os.LookupEnv("PORT")
+	if !ok {
+		port = "8080"
+	}
+
+	return &Config{
+		AwsRegion:   awsRegion,
+		DatabaseURL: databaseURL,
+		Environment: env,
+		//LogLevel:    logLevel,
+		Port: port,
+	}, nil
 }

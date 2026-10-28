@@ -8,7 +8,7 @@ import (
 )
 
 type Repository interface {
-	Upsert(ctx context.Context, a Account) (Account, error)
+	Upsert(ctx context.Context, account Account) (Account, error)
 }
 
 // Account represents an AWS Organizations Account.

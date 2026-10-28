@@ -1,9 +1,9 @@
 INSERT INTO aws_cloud.account(
     account_id,
-    account_name,
-    account_arn,
+    name,
+    arn,
     email,
-    account_state,
+    state,
     joined_method,
     joined_at
 )

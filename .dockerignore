@@ -1,0 +1,11 @@
+.git
+.gitignore
+README.md
+Dockerfile
+*.md
+tmp/
+bin/
+dist/
+coverage.out
+.env
+*.sql

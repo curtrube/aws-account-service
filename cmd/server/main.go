@@ -14,7 +14,11 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/organizations"
-	account "github.com/curtrube/aws-account-service/internal/aws"
+	"github.com/curtrube/aws-account-service/internal/account"
+	awsorg "github.com/curtrube/aws-account-service/internal/account/aws/organizations"
+	"github.com/curtrube/aws-account-service/internal/account/poller"
+	accountrepo "github.com/curtrube/aws-account-service/internal/account/postgres"
+	"github.com/curtrube/aws-account-service/internal/db"
 )
 
 func main() {
@@ -27,6 +31,17 @@ func main() {
 
 	// Shared cancellation context for background work.
 	ctx, cancel := context.WithCancel(signalCtx)
+
+	slog.SetDefault(logger())
+
+	// Initalize a new PG pool.
+	databaseURL := "postgresql://devuser:devpassword@localhost:5432/devdb"
+	pool, err := db.New(ctx, databaseURL)
+	if err != nil {
+		slog.Error("creating new pgx pool", "error", err.Error())
+		return
+	}
+	defer pool.Close()
 
 	// Initialize AWS before starting the server.
 	cfg, err := config.LoadDefaultConfig(
@@ -55,8 +70,8 @@ func main() {
 	// Report unexpected server errors to main.
 	serverErr := make(chan error, 1)
 
-	// start the server in the background
-	go func() {
+	var wg sync.WaitGroup
+	wg.Go(func() {
 		slog.Info("server starting", "address", srv.Addr, "environment", os.Getenv("ENVIRONMENT"))
 
 		if err := srv.ListenAndServe(); err != nil &&
@@ -64,40 +79,19 @@ func main() {
 			serverErr <- err
 			cancel()
 		}
-	}()
+	})
 
-	var wg sync.WaitGroup
+	repo := accountrepo.NewRepository(pool)
+	accountPoller := poller.New(
+		func(ctx context.Context) ([]account.Account, error) {
+			return awsorg.ListAccounts(ctx, orgClient)
+		},
+		repo,
+		10*time.Second,
+	)
 
 	wg.Go(func() {
-		ticker := time.NewTicker(10 * time.Second)
-		defer ticker.Stop()
-
-		poll := func() {
-			slog.Info("polling AWS account metadata")
-			pollCtx, pollCancel := context.WithTimeout(ctx, 30*time.Second)
-			defer pollCancel()
-
-			accounts, err := account.ListAccounts(pollCtx, orgClient)
-			if err != nil {
-				if ctx.Err() == nil {
-					slog.Error("listing AWS accounts", "error", err)
-				}
-				return
-			}
-			slog.Info("AWS accounts retrieved", "count", len(accounts))
-			// Process accounts here.
-		}
-
-		for {
-			select {
-			case <-ctx.Done():
-				slog.Info("AWS account poller shutting down")
-				return
-
-			case <-ticker.C:
-				poll()
-			}
-		}
+		accountPoller.Run(ctx)
 	})
 
 	// Wait for a termination signal or unexpected server failure.

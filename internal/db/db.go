@@ -14,7 +14,7 @@ import (
 func New(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 	cfg, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
-		return nil, fmt.Errorf("parse config: %w", err)
+		return nil, fmt.Errorf("parse pg config: %w", err)
 	}
 
 	cfg.MaxConns = 10
@@ -26,7 +26,7 @@ func New(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("create pool: %w", err)
+		return nil, fmt.Errorf("create new pgx pool: %w", err)
 	}
 
 	if err := pool.Ping(ctx); err != nil {

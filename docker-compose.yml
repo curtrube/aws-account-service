@@ -9,8 +9,8 @@ services:
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./sql:/docker-entrypoint-initdb.d # optional: drop .sql files here to seed on first run
+      - postgres_data:/var/lib/postgresql
+      - ./sql:/docker-entrypoint-initdb.d:ro,Z # optional: drop .sql files here to seed on first run
     healthcheck:
       test:
         [
