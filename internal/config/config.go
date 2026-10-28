@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"os"
+	"strconv"
 )
 
 // Config holds cli configuration for aws-account-service.
@@ -10,7 +11,7 @@ type Config struct {
 	AwsRegion   string
 	DatabaseURL string
 	Environment string
-	Port        string
+	Port        int
 }
 
 // Load reads service configuration from environment varaibles and applies defaults.
@@ -23,7 +24,7 @@ func Load() (*Config, error) {
 	// If not databaseURL, then require PG_*
 	databaseURL, ok := os.LookupEnv("DATABASE_URL")
 	if !ok {
-		return nil, errors.New("m")
+		return nil, errors.New("missing required env variable: DATABASE_URL")
 	}
 
 	env, ok := os.LookupEnv("ENVIRONMENT")
@@ -36,16 +37,22 @@ func Load() (*Config, error) {
 	//	logLevel = slog.LevelInfo
 	//}
 
-	port, ok := os.LookupEnv("PORT")
+	var port int
+	var err error
+	p, ok := os.LookupEnv("PORT")
 	if !ok {
-		port = "8080"
+		port = 8080
+	} else {
+		port, err = strconv.Atoi(p)
+		if err != nil {
+			return nil, errors.New("parsing port string to integer")
+		}
 	}
 
 	return &Config{
 		AwsRegion:   awsRegion,
 		DatabaseURL: databaseURL,
 		Environment: env,
-		//LogLevel:    logLevel,
-		Port: port,
+		Port:        port,
 	}, nil
 }

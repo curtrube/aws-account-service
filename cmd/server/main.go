@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -12,14 +12,22 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/config"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/organizations"
 	"github.com/curtrube/aws-account-service/internal/account"
 	awsorg "github.com/curtrube/aws-account-service/internal/account/aws/organizations"
 	"github.com/curtrube/aws-account-service/internal/account/poller"
 	accountrepo "github.com/curtrube/aws-account-service/internal/account/postgres"
+	"github.com/curtrube/aws-account-service/internal/config"
 	"github.com/curtrube/aws-account-service/internal/db"
 )
+
+// Declare a version string. TODO: generate this automatically at build time.
+const version = "1.0.0"
+
+type application struct {
+	cfg config.Config
+}
 
 func main() {
 	signalCtx, stop := signal.NotifyContext(
@@ -34,9 +42,15 @@ func main() {
 
 	slog.SetDefault(logger())
 
+	// Load app config.
+	cfg, err := config.Load()
+	if err != nil {
+		slog.Error("loading application config", "error", err)
+		return
+	}
+
 	// Initalize a new PG pool.
-	databaseURL := "postgresql://devuser:devpassword@localhost:5432/devdb"
-	pool, err := db.New(ctx, databaseURL)
+	pool, err := db.New(ctx, cfg.DatabaseURL)
 	if err != nil {
 		slog.Error("creating new pgx pool", "error", err.Error())
 		return
@@ -44,27 +58,23 @@ func main() {
 	defer pool.Close()
 
 	// Initialize AWS before starting the server.
-	cfg, err := config.LoadDefaultConfig(
+	awscfg, err := awsconfig.LoadDefaultConfig(
 		ctx,
-		config.WithRegion(os.Getenv("AWS_REGION")),
+		awsconfig.WithRegion(os.Getenv("AWS_REGION")),
 	)
 	if err != nil {
 		slog.Error("unable to load AWS config", "error", err)
 		return
 	}
-	orgClient := organizations.NewFromConfig(cfg)
+	orgClient := organizations.NewFromConfig(awscfg)
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"status": "ok",
-		})
-	})
+	app := &application{
+		cfg: *cfg,
+	}
 
 	srv := &http.Server{
-		Addr:    ":8080",
-		Handler: mux,
+		Addr:    fmt.Sprintf(":%d", cfg.Port),
+		Handler: app.routes(),
 	}
 
 	// Report unexpected server errors to main.
