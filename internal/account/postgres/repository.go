@@ -23,6 +23,29 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{db: db}
 }
 
+// Get retrieves an account by id.
+func (r *Repository) Get(ctx context.Context, id int) (account.Account, error) {
+	var a account.Account
+	if err := r.db.QueryRow(
+		ctx,
+		`SELECT id, account_id, name, arn, email, state, joined_method, joined_at
+		 FROM aws_cloud.account
+		 WHERE id = @id`,
+	).Scan(
+		&a.ID,
+		&a.AccountID,
+		&a.Name,
+		&a.Arn,
+		&a.Email,
+		&a.State,
+		&a.JoinedMethod,
+		&a.JoinedAt,
+	); err != nil {
+		return account.Account{}, fmt.Errorf("get account: %w", err)
+	}
+	return a, nil
+}
+
 const upsertAccountSQL = `
 INSERT INTO aws_cloud.account (
 	account_id,

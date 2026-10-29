@@ -28,8 +28,33 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+func TestRepository_Get(t *testing.T) {
+
+	ctx := context.Background()
+	require.NotNil(t, testPool)
+
+	repo := NewRepository(testPool)
+	require.NotNil(t, repo)
+
+	loc := time.FixedZone("CDT", -5*60*60)
+	expected := account.Account{
+		ID:           1,
+		AccountID:    "111111111111",
+		Name:         "test-account-1",
+		Arn:          "arn:aws:organizations::111111111111:account/o-abc123/111111111111",
+		Email:        "foo@bar.com",
+		State:        "ACTIVE",
+		JoinedMethod: "CREATED",
+		JoinedAt:     time.Date(2026, time.June, 23, 9, 30, 0, 0, loc),
+	}
+
+	account, err := repo.Get(ctx, 1)
+	require.NoError(t, err)
+	assert.Equal(t, expected.ID, account.ID)
+	fmt.Println(account)
+}
+
 func TestRepository_Upsert(t *testing.T) {
-	t.Parallel()
 
 	ctx := context.Background()
 	require.NotNil(t, testPool)
@@ -65,7 +90,6 @@ func TestRepository_Upsert(t *testing.T) {
 }
 
 func TestRepository_List(t *testing.T) {
-	t.Parallel()
 
 	ctx := context.Background()
 	require.NotNil(t, testPool)

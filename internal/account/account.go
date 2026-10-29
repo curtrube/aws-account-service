@@ -8,13 +8,14 @@ import (
 )
 
 type Repository interface {
-	Upsert(ctx context.Context, account Account) (Account, error)
+	Get(ctx context.Context, id int) (Account, error)
 	List(ctx context.Context) ([]Account, error)
+	Upsert(ctx context.Context, account Account) (Account, error)
 }
 
 // Account represents an AWS Organizations Account.
 type Account struct {
-	ID           int64     `db:"id"`
+	ID           int       `db:"id"`
 	AccountID    string    `db:"account_id"`
 	Name         string    `db:"name"`
 	Arn          string    `db:"arn"`

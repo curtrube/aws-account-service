@@ -26,7 +26,8 @@ import (
 const version = "1.0.0"
 
 type application struct {
-	cfg config.Config
+	cfg  *config.Config
+	repo account.Repository
 }
 
 func main() {
@@ -68,8 +69,18 @@ func main() {
 	}
 	orgClient := organizations.NewFromConfig(awscfg)
 
+	repo := accountrepo.NewRepository(pool)
+	accountPoller := poller.New(
+		func(ctx context.Context) ([]account.Account, error) {
+			return awsorg.ListAccounts(ctx, orgClient)
+		},
+		repo,
+		10*time.Second,
+	)
+
 	app := &application{
-		cfg: *cfg,
+		cfg:  cfg,
+		repo: repo,
 	}
 
 	srv := &http.Server{
@@ -82,23 +93,13 @@ func main() {
 
 	var wg sync.WaitGroup
 	wg.Go(func() {
-		slog.Info("server starting", "address", srv.Addr, "environment", os.Getenv("ENVIRONMENT"))
-
+		slog.Info("server starting", "address", srv.Addr, "environment", cfg.Environment)
 		if err := srv.ListenAndServe(); err != nil &&
 			!errors.Is(err, http.ErrServerClosed) {
 			serverErr <- err
 			cancel()
 		}
 	})
-
-	repo := accountrepo.NewRepository(pool)
-	accountPoller := poller.New(
-		func(ctx context.Context) ([]account.Account, error) {
-			return awsorg.ListAccounts(ctx, orgClient)
-		},
-		repo,
-		10*time.Second,
-	)
 
 	wg.Go(func() {
 		accountPoller.Run(ctx)
