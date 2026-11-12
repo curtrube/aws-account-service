@@ -5,6 +5,10 @@ import (
 	"net/http"
 )
 
+// envelope responses so that JSON data is always
+// enveloped in an outer JSON object.
+type envelope map[string]any
+
 // writeJSON is a helper for sending JSON responses.
 //
 // Accepts a http.ResponseWriter, the http status code to send, the data to encode to JSON,

@@ -26,8 +26,9 @@ import (
 const version = "1.0.0"
 
 type application struct {
-	cfg  *config.Config
-	repo account.Repository
+	cfg    *config.Config
+	logger *slog.Logger
+	repo   account.Repository
 }
 
 func main() {
@@ -41,14 +42,16 @@ func main() {
 	// Shared cancellation context for background work.
 	ctx, cancel := context.WithCancel(signalCtx)
 
-	slog.SetDefault(logger())
-
 	// Load app config.
 	cfg, err := config.Load()
 	if err != nil {
 		slog.Error("loading application config", "error", err)
 		return
 	}
+
+	// Setup logging
+	logger := logger()
+	slog.SetDefault(logger)
 
 	// Initalize a new PG pool.
 	pool, err := db.New(ctx, cfg.DatabaseURL)
@@ -79,8 +82,9 @@ func main() {
 	)
 
 	app := &application{
-		cfg:  cfg,
-		repo: repo,
+		cfg:    cfg,
+		logger: logger,
+		repo:   repo,
 	}
 
 	srv := &http.Server{
