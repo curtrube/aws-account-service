@@ -9,7 +9,7 @@ help: ## Show available commands
 
 build: ## Build the application
 	@echo "Building..."
-	go build ./cmd/server
+	go build -o bin/server ./cmd/server
 
 test: ## Run tests
 	@echo "Running tests..."
@@ -23,7 +23,7 @@ fmt: ## Go fmt
 	@echo "Formatting..."
 	go fmt ./...
 
-clean: ## Remove go cache
+clean: ## Remove go build artifacts
 	@echo "Cleaning..."
 	go clean -cache -testcache
-	rm -f cover.out
+	rm -rf cover.out bin/
