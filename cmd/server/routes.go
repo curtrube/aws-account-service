@@ -12,7 +12,7 @@ func (app *application) routes() http.Handler {
 
 	// Accounts
 	mux.HandleFunc("GET /v1/account", app.listAccountsHandler)
-	mux.HandleFunc("GET /v1/account:id", app.getAccountHandler)
+	mux.HandleFunc("GET /v1/account/{id}", app.getAccountHandler)
 
 	return mux
 }

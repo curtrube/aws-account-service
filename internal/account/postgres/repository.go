@@ -3,6 +3,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/curtrube/aws-account-service/internal/account"
@@ -31,6 +32,9 @@ func (r *Repository) Get(ctx context.Context, id int) (account.Account, error) {
 		`SELECT id, account_id, name, arn, email, state, joined_method, joined_at
 		 FROM aws_cloud.account
 		 WHERE id = @id`,
+		pgx.NamedArgs{
+			"id": id,
+		},
 	).Scan(
 		&a.ID,
 		&a.AccountID,
@@ -41,8 +45,14 @@ func (r *Repository) Get(ctx context.Context, id int) (account.Account, error) {
 		&a.JoinedMethod,
 		&a.JoinedAt,
 	); err != nil {
-		return account.Account{}, fmt.Errorf("get account: %w", err)
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return account.Account{}, account.ErrNoAccount
+		default:
+			return account.Account{}, err
+		}
 	}
+
 	return a, nil
 }
 

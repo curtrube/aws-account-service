@@ -26,9 +26,9 @@ import (
 const version = "1.0.0"
 
 type application struct {
-	cfg    *config.Config
-	logger *slog.Logger
-	repo   account.Repository
+	cfg     *config.Config
+	logger  *slog.Logger
+	account account.Repository
 }
 
 func main() {
@@ -82,9 +82,9 @@ func main() {
 	)
 
 	app := &application{
-		cfg:    cfg,
-		logger: logger,
-		repo:   repo,
+		cfg:     cfg,
+		logger:  logger,
+		account: repo,
 	}
 
 	srv := &http.Server{
