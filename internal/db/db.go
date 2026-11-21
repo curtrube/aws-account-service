@@ -11,8 +11,8 @@ import (
 // New creates a new PGX Pool.
 // Empty databaseURL string reads all `PG*` env vars automatically.
 // The caller is responsible for closing the pool.
-func New(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
-	cfg, err := pgxpool.ParseConfig(databaseURL)
+func New(ctx context.Context) (*pgxpool.Pool, error) {
+	cfg, err := pgxpool.ParseConfig("")
 	if err != nil {
 		return nil, fmt.Errorf("parse pg config: %w", err)
 	}

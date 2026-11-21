@@ -11,8 +11,8 @@ import (
 
 func (app *application) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	data := map[string]string{
-		"status":      "ok",
 		"environment": app.cfg.Environment,
+		"status":      "ok",
 		"version":     version,
 	}
 

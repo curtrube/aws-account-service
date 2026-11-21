@@ -1,58 +1,72 @@
 package config
 
 import (
-	"errors"
+	"fmt"
 	"os"
 	"strconv"
 )
 
-// Config holds cli configuration for aws-account-service.
+// Config holds configuration for aws-account-service.
 type Config struct {
 	AwsRegion   string
-	DatabaseURL string
 	Environment string
 	Port        int
+	DB          PostgreSQLConfig
+}
+
+// PostgresSQLConfig is Postgresql database configuration.
+type PostgreSQLConfig struct {
+	Host     string
+	Port     int
+	Database string
+	// Fine for development but will want to move this when we deploy.
+	Username string
+	Password string
 }
 
 // Load reads service configuration from environment varaibles and applies defaults.
-func Load() (*Config, error) {
-	awsRegion, ok := os.LookupEnv("AWS_REGION")
-	if !ok {
-		awsRegion = ""
+func Load() (Config, error) {
+	cfg := Config{
+		AwsRegion:   getEnv("AWS_REGION", "us-east-1"),
+		Environment: getEnv("ENVIRONMENT", "dev"),
+		Port:        getInt("PORT", 8080),
+		DB: PostgreSQLConfig{
+			Host:     mustGetEnv("PGHOST"),
+			Port:     getInt("PGPORT", 5432),
+			Database: mustGetEnv("PGDATABASE"),
+			Username: mustGetEnv("PGUSER"),
+			Password: mustGetEnv("PGPASSWORD"),
+		},
 	}
 
-	// If not databaseURL, then require PG_*
-	databaseURL, ok := os.LookupEnv("DATABASE_URL")
-	if !ok {
-		return nil, errors.New("missing required env variable: DATABASE_URL")
+	return cfg, nil
+}
+
+// getEnv retrieves the value of the environment variable identified by key.
+// If the variable is unset or empty, it returns fallback.
+func getEnv(key, fallback string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
 	}
+	return fallback
+}
 
-	env, ok := os.LookupEnv("ENVIRONMENT")
-	if !ok {
-		return nil, errors.New("missing required env variable: ENVIRONMENT")
+// mustGetEnv retrieves the value of the environment variable identified by key.
+// It panics if the variable is unset or empty.
+func mustGetEnv(key string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		panic(fmt.Sprintf("environment variable %q not set", key))
 	}
+	return value
+}
 
-	//logLevel, ok := os.LookupEnv("LOG_LEVEL")
-	//if !ok {
-	//	logLevel = slog.LevelInfo
-	//}
-
-	var port int
-	var err error
-	p, ok := os.LookupEnv("PORT")
-	if !ok {
-		port = 8080
-	} else {
-		port, err = strconv.Atoi(p)
-		if err != nil {
-			return nil, errors.New("parsing port string to integer")
-		}
+// getInt retrieves the int value of the environment variable identified by key.
+// If the variable is unset or empty, it returns fallback.
+func getInt(key string, fallback int) int {
+	value, err := strconv.Atoi(os.Getenv(key))
+	if err != nil {
+		return fallback
 	}
-
-	return &Config{
-		AwsRegion:   awsRegion,
-		DatabaseURL: databaseURL,
-		Environment: env,
-		Port:        port,
-	}, nil
+	return value
 }

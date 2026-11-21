@@ -26,7 +26,7 @@ import (
 const version = "1.0.0"
 
 type application struct {
-	cfg     *config.Config
+	cfg     config.Config
 	logger  *slog.Logger
 	account account.Repository
 }
@@ -54,7 +54,7 @@ func main() {
 	slog.SetDefault(logger)
 
 	// Initalize a new PG pool.
-	pool, err := db.New(ctx, cfg.DatabaseURL)
+	pool, err := db.New(ctx)
 	if err != nil {
 		slog.Error("creating new pgx pool", "error", err.Error())
 		return
